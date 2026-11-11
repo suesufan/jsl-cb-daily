@@ -261,7 +261,12 @@ def build_report(rows):
         ]
         push.append("  " + " / ".join(p for p in parts if p))
 
-    push.append("\n> 数据：jisilu.cn · 自动抓取，不构成投资建议")
+    push.append("\n### ⚠️ 风险提示（安全/合规）\n")
+    push.append("1. 数据仅来自公开网页自动抓取，**不构成任何投资建议**。")
+    push.append("2. 实际发行条款、利率、评级、赎回条款等请以交易所及上市公司正式公告为准。")
+    push.append("3. **合规提醒**：科创板（需 2 年交易经验 + 50 万资产权限）、创业板（2 年交易经验 + 10 万资产权限）转债仅对应权限账户可申购，普通账户无效申购。")
+    push.append("4. \"同意注册\"不等同于\"立即发行\"，仍可能因市场或公司原因延迟。")
+    push.append("\n> 数据：jisilu.cn · 自动抓取")
 
     push_md = "\n".join(push)
     card_summary = f"可申购 {len(ipo_list)} 只 · 同意注册 {len(reg_list)} 只 | 集思录待发转债日报 {today}"
