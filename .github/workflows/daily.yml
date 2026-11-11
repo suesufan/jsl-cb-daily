@@ -2,8 +2,8 @@ name: daily-report
 
 on:
   schedule:
-    # UTC 07:05 = 北京时间 15:05（GitHub 定时可能有几分钟延迟）
-    - cron: '5 7 * * *'
+    # UTC 02:00 = 北京时间 10:00（GitHub 定时可能有几分钟延迟）
+    - cron: '0 2 * * *'
   workflow_dispatch: {}
 
 permissions:
