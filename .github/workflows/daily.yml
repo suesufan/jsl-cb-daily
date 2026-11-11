@@ -1,0 +1,34 @@
+name: daily-report
+
+on:
+  schedule:
+    # UTC 07:05 = 北京时间 15:05（GitHub 定时可能有几分钟延迟）
+    - cron: '5 7 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate and push report
+        env:
+          WXPUSHER_TOKEN: ${{ secrets.WXPUSHER_TOKEN }}
+          WXPUSHER_UID: ${{ secrets.WXPUSHER_UID }}
+        run: python main.py
+
+      - name: Archive report
+        run: |
+          git config user.name "report-bot"
+          git config user.email "report-bot@users.noreply.github.com"
+          git add reports/ || true
+          git commit -m "report: $(TZ='Asia/Shanghai' date +'%Y-%m-%d')" || echo "nothing to commit"
+          git push
