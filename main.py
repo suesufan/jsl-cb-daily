@@ -164,7 +164,7 @@ def build_report(rows):
         b["n"] += 1
         b["amt"] += amt
 
-    # ---- Markdown ----
+    # ---- 归档版 Markdown（PC 查看用，保留完整表格）----
     md = []
     md.append(f"# 集思录 · 待发转债日报（{today}）\n")
     md.append("- 数据来源：<https://www.jisilu.cn/web/data/cb/pre>")
@@ -219,9 +219,53 @@ def build_report(rows):
     md.append("3. **合规提醒**：科创板（需 2 年交易经验 + 50 万资产权限）、创业板（2 年交易经验 + 10 万资产权限）转债仅对应权限账户可申购，普通账户无效申购。")
     md.append("4. \"同意注册\"不等同于\"立即发行\"，仍可能因市场或公司原因延迟。")
 
-    content = "\n".join(md)
+    archive_md = "\n".join(md)
+
+    # ---- 推送版 Markdown（手机查看用，列表式排版）----
+    push = []
+    push.append(f"## 📈 集思录待发转债日报 {today}")
+    push.append(f"可申购 **{len(ipo_list)}** 只 · 同意注册 **{len(reg_list)}** 只\n")
+
+    push.append("### 🟢 可申购\n")
+    if not ipo_list:
+        push.append("- 当前无可申购的待发转债")
+    for it in ipo_list:
+        push.append(
+            f"- **{it['apply_date']}** `{it['apply_code']}` {it['bond_name']}"
+            f"（{it['stock_name']}·{it['board']}）"
+        )
+        parts = [
+            f"规模 {it['scale']} 亿",
+            f"评级 {it['rating']}" if it["rating"] != "-" else "",
+            f"转股价 {it['conv_px']}",
+            f"正股价 {it['stock_px']}",
+            f"正股/转股价 {it['stock_conv']}",
+            f"配售10张需 {it['need_shares']} 股" if it["need_shares"] != "-" else "",
+        ]
+        push.append("  " + " / ".join(p for p in parts if p))
+
+    push.append("\n### 🟡 同意注册\n")
+    if not reg_list:
+        push.append("- 当前无同意注册阶段的待发转债")
+    for it in reg_list:
+        push.append(
+            f"- **{it['pub_date']}** {it['stock_name']}"
+            f"（{it['board']}）规模 **{it['scale']}** 亿"
+        )
+        parts = [
+            f"转股价 {it['conv_px']}",
+            f"正股价 {it['stock_px']}",
+            f"正股/转股价 {it['stock_conv']}",
+            f"每股配售 {it['per_share']} 元" if it["per_share"] != "-" else "",
+            f"配售10张需 {it['need_shares']} 股" if it["need_shares"] != "-" else "",
+        ]
+        push.append("  " + " / ".join(p for p in parts if p))
+
+    push.append("\n> 数据：jisilu.cn · 自动抓取，不构成投资建议")
+
+    push_md = "\n".join(push)
     card_summary = f"可申购 {len(ipo_list)} 只 · 同意注册 {len(reg_list)} 只 | 集思录待发转债日报 {today}"
-    return content, card_summary, today
+    return archive_md, push_md, card_summary, today
 
 
 # ============ 推送 ============
@@ -262,18 +306,18 @@ def main() -> int:
         return 1
 
     rows = fetch_rows()
-    content, card_summary, today = build_report(rows)
+    archive_md, push_md, card_summary, today = build_report(rows)
 
-    # 归档
+    # 归档（完整表格版）
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     out_file = REPORT_DIR / f"集思录-待发转债-{today}.md"
-    out_file.write_text(content, encoding="utf-8")
+    out_file.write_text(archive_md, encoding="utf-8")
     print(f"[SAVE] 日报已归档: {out_file}", flush=True)
 
-    # 推送
+    # 推送（手机列表版）
     print(f"[PUSH] 目标 UID: {uid[:8]}*** / token: {mask(token)}", flush=True)
     try:
-        push_wxpusher(token, uid, content, card_summary)
+        push_wxpusher(token, uid, push_md, card_summary)
     except Exception as e:  # noqa: BLE001
         print(f"[ERROR] 微信推送失败: {e}", flush=True)
         return 1
