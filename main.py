@@ -316,6 +316,13 @@ def main() -> int:
     # 归档（完整表格版）
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     out_file = REPORT_DIR / f"集思录-待发转债-{today}.md"
+
+    # 幂等判断：定时任务设 SKIP_IF_EXISTS=1，若今日日报已归档（说明已推送成功）则跳过，
+    # 避免兜底重试导致重复推送；手动触发不带该变量，可强制重推
+    if os.environ.get("SKIP_IF_EXISTS") == "1" and out_file.exists():
+        print(f"[SKIP] 今日日报已存在（{out_file}），视为已推送，跳过", flush=True)
+        return 0
+
     out_file.write_text(archive_md, encoding="utf-8")
     print(f"[SAVE] 日报已归档: {out_file}", flush=True)
 

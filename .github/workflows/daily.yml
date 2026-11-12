@@ -2,8 +2,11 @@ name: daily-report
 
 on:
   schedule:
-    # UTC 02:00 = 北京时间 10:00（GitHub 定时可能有几分钟延迟）
-    - cron: '0 2 * * *'
+    # 北京时间 09:52（UTC 01:52）——避开整点/第 0 分钟的高负载时段，
+    # GitHub 定时通常延迟几分钟，实际到达约 09:55~10:10
+    - cron: '52 1 * * *'
+    # 兜底重试：北京 10:35（UTC 02:35）；若首次已成功推送，脚本会幂等跳过
+    - cron: '35 2 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -23,6 +26,8 @@ jobs:
         env:
           WXPUSHER_TOKEN: ${{ secrets.WXPUSHER_TOKEN }}
           WXPUSHER_UID: ${{ secrets.WXPUSHER_UID }}
+          # 定时触发时幂等跳过重复；手动触发时强制重推
+          SKIP_IF_EXISTS: ${{ github.event_name == 'schedule' && '1' || '0' }}
         run: python main.py
 
       - name: Archive report
