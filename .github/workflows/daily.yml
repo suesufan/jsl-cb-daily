@@ -2,13 +2,11 @@ name: daily-report
 
 on:
   schedule:
-    # GitHub schedule 触发不可靠（私有仓库优先级低，可能延迟数小时甚至丢弃），
-    # 因此在 09:52~10:35 之间设 5 次尝试；配合 main.py 的幂等判断，只有首次成功会真正推送
-    - cron: '52 1 * * *'   # 北京 09:52
-    - cron: '3 2 * * *'    # 北京 10:03
-    - cron: '12 2 * * *'   # 北京 10:12
-    - cron: '23 2 * * *'   # 北京 10:23
-    - cron: '35 2 * * *'   # 北京 10:35 兜底
+    # 主触发：cron-job.org 每天 10:00 准点调 workflow_dispatch（秒级执行，已验证）。
+    # 此处仅保留一个兜底：若外部触发当天失败（如 cron-job.org 挂了），
+    # 这条会补跑一次；当天已推送过则由 main.py 幂等跳过，不会重复打扰。
+    # 注：GitHub schedule 对免费仓库可能延迟数小时，属正常，仅作保险。
+    - cron: '35 2 * * *'   # 名义北京 10:35
   workflow_dispatch: {}
 
 permissions:
